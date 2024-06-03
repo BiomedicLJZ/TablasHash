@@ -116,19 +116,19 @@ public:
 
     void displayHash() const {
         for (int i = 0; i < tableSize; i++) {
+            std::cout << i << " --> ";
             if (collisionMethod == SEPARATE_CHAINING) {
                 if (!chains[i].empty()) {
-                    std::cout << i << " --> ";
-                    for (const int& val : chains[i]) {
+                    for (const auto& val : chains[i]) {
                         std::cout << val << " ";
                     }
-                    std::cout << std::endl;
                 }
             } else {
                 if (occupied[i]) {
-                    std::cout << i << " --> " << table[i] << std::endl;
+                    std::cout << table[i];
                 }
             }
+            std::cout << std::endl;
         }
     }
 
@@ -144,6 +144,7 @@ private:
     void rehash() {
         std::vector<int> oldTable = table;
         std::vector<bool> oldOccupied = occupied;
+        std::vector<std::list<int>> oldChains = chains; // Store the old chains
         tableSize *= 2; // Double the table size
         table = std::vector<int>(tableSize, -1);
         occupied = std::vector<bool>(tableSize, false);
@@ -156,6 +157,14 @@ private:
         for (int i = 0; i < oldTable.size(); i++) {
             if (oldOccupied[i]) {
                 insertItem(oldTable[i]);
+            }
+        }
+        // Rehash the elements from the old chains
+        if (collisionMethod == SEPARATE_CHAINING) {
+            for (int i = 0; i < oldChains.size(); i++) {
+                for (const auto& value : oldChains[i]) {
+                    insertItem(value);
+                }
             }
         }
     }
