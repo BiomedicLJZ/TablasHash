@@ -24,6 +24,8 @@ public:
         occupied.resize(tableSize, false);
         if (method == SEPARATE_CHAINING) {
             chains.resize(tableSize);
+        } else if (method == COALESCED) {
+            next.resize(tableSize, -1);
         }
     }
 
@@ -62,21 +64,69 @@ public:
     }
 
     void deleteItem(int value) {
-        // Implement deletion for different strategies
+        int index = hashFunction(value);
+        switch (collisionMethod) {
+            case SEPARATE_CHAINING:
+                chains[index].remove(value);
+                itemCount--;
+                break;
+            case LINEAR_PROBING:
+            case QUADRATIC_PROBING:
+            case DOUBLE_HASHING:
+            case ROBIN_HOOD:
+            case COALESCED:
+                while (occupied[index]) {
+                    if (table[index] == value) {
+                        table[index] = -1;
+                        occupied[index] = false;
+                        itemCount--;
+                        return;
+                    }
+                    index = nextIndex(index, value);
+                }
+                break;
+        }
     }
 
     int get(int value) {
-        // Implement get for different strategies
+        int index = hashFunction(value);
+        switch (collisionMethod) {
+            case SEPARATE_CHAINING:
+                for (const int& val : chains[index]) {
+                    if (val == value) {
+                        return val;
+                    }
+                }
+                break;
+            case LINEAR_PROBING:
+            case QUADRATIC_PROBING:
+            case DOUBLE_HASHING:
+            case ROBIN_HOOD:
+            case COALESCED:
+                while (occupied[index]) {
+                    if (table[index] == value) {
+                        return table[index];
+                    }
+                    index = nextIndex(index, value);
+                }
+                break;
+        }
+        return -1; // Return -1 if value is not found
     }
 
     void displayHash() const {
         for (int i = 0; i < tableSize; i++) {
-            if (occupied[i]) {
-                std::cout << i << " --> " << table[i] << std::endl;
-            }
             if (collisionMethod == SEPARATE_CHAINING) {
-                for (const int& val : chains[i]) {
-                    std::cout << i << " --> " << val << std::endl;
+                if (!chains[i].empty()) {
+                    std::cout << i << " --> ";
+                    for (const int& val : chains[i]) {
+                        std::cout << val << " ";
+                    }
+                    std::cout << std::endl;
+                }
+            } else {
+                if (occupied[i]) {
+                    std::cout << i << " --> " << table[i] << std::endl;
                 }
             }
         }
@@ -92,7 +142,43 @@ private:
     std::vector<int> next; // For coalesced chaining
 
     void rehash() {
-        // Rehash logic remains similar, but accommodate chosen collision method
+        std::vector<int> oldTable = table;
+        std::vector<bool> oldOccupied = occupied;
+        tableSize *= 2; // Double the table size
+        table = std::vector<int>(tableSize, -1);
+        occupied = std::vector<bool>(tableSize, false);
+        if (collisionMethod == SEPARATE_CHAINING) {
+            chains = std::vector<std::list<int>>(tableSize);
+        } else if (collisionMethod == COALESCED) {
+            next = std::vector<int>(tableSize, -1);
+        }
+        itemCount = 0; // Reset itemCount
+        for (int i = 0; i < oldTable.size(); i++) {
+            if (oldOccupied[i]) {
+                insertItem(oldTable[i]);
+            }
+        }
+    }
+
+    int nextIndex(int currentIndex, int value) const {
+        switch (collisionMethod) {
+            case LINEAR_PROBING:
+                return (currentIndex + 1) % tableSize;
+            case QUADRATIC_PROBING: {
+                static int i = 1;
+                int index = (currentIndex + i * i) % tableSize;
+                i++;
+                return index;
+            }
+            case DOUBLE_HASHING:
+                return (currentIndex + secondHashFunction(value)) % tableSize;
+            case ROBIN_HOOD:
+                return (currentIndex + 1) % tableSize;
+            case COALESCED:
+                return next[currentIndex];
+            default:
+                return -1;
+        }
     }
 
     // Insert functions for each collision handling method
@@ -151,7 +237,6 @@ private:
         itemCount++;
     }
 
-
     void insertCoalesced(int value) {
         int index = hashFunction(value);
         int lastIndex = -1;
@@ -166,7 +251,6 @@ private:
             next[lastIndex] = index;
         }
     }
-
 };
 
 #endif // TABLASHASH_HASHTABLE_H
