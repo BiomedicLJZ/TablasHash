@@ -2,18 +2,12 @@
 #include <iostream>
 
 int main() {
-    HashTable table(5, SEPARATE_CHAINING); // Decrease the initial size of the hash table
-    table.insertItem(1);
-    table.insertItem(2);
-    table.insertItem(3);
-    table.insertItem(4);
-    table.insertItem(5);
-    table.insertItem(15);
-    table.insertItem(25);
-    table.insertItem(35);
-    table.insertItem(45);
-    table.insertItem(54);
-    table.insertItem(22);
+    HashTable table(10,QUADRATIC_PROBING);
+    table.insertItem(89);
+    table.insertItem(18);
+    table.insertItem(49);
+    table.insertItem(58);
+    table.insertItem(69);
     table.displayHash();
     return 0;
 }

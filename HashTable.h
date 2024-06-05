@@ -82,7 +82,7 @@ public:
                         itemCount--;
                         return;
                     }
-                    index = nextIndex(index, value);
+                    index = nextIndex(index, value, 0); // Reset i to 0 for quadratic probing
                 }
                 break;
         }
@@ -103,11 +103,12 @@ public:
             case DOUBLE_HASHING:
             case ROBIN_HOOD:
             case COALESCED:
+                int i = 0; // Initialize i for quadratic probing
                 while (occupied[index]) {
                     if (table[index] == value) {
                         return table[index];
                     }
-                    index = nextIndex(index, value);
+                    index = nextIndex(index, value, i++);
                 }
                 break;
         }
@@ -169,16 +170,12 @@ private:
         }
     }
 
-    int nextIndex(int currentIndex, int value) const {
+    int nextIndex(int currentIndex, int value, int i) const {
         switch (collisionMethod) {
             case LINEAR_PROBING:
                 return (currentIndex + 1) % tableSize;
-            case QUADRATIC_PROBING: {
-                static int i = 1;
-                int index = (currentIndex + i * i) % tableSize;
-                i++;
-                return index;
-            }
+            case QUADRATIC_PROBING:
+                return (currentIndex + i * i) % tableSize;
             case DOUBLE_HASHING:
                 return (currentIndex + secondHashFunction(value)) % tableSize;
             case ROBIN_HOOD:
@@ -229,6 +226,8 @@ private:
         itemCount++;
     }
 
+#pragma region RobinHoodandCoalesced// DO NOT DOCUMENT AS THEY ARE NOT PART OF THE EXERCISE
+
     void insertRobinHood(int value) {
         int index = hashFunction(value);
         int dist = 0;
@@ -260,6 +259,7 @@ private:
             next[lastIndex] = index;
         }
     }
+#pragma endregion
 };
 
 #endif // TABLASHASH_HASHTABLE_H
